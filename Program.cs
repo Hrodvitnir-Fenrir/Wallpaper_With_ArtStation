@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 
 namespace WallpaperWithArtStation
 {
@@ -14,7 +15,8 @@ namespace WallpaperWithArtStation
             JsonDocument jsonDoc = JsonDocument.Parse(response);
             string imageUrl = jsonDoc.RootElement.GetProperty("assets")[0].GetProperty("image_url").GetString();
 
-            if (imageUrl == null) {
+            if (imageUrl == null)
+            {
                 imageUrl = "https://cdnb.artstation.com/p/assets/images/images/053/557/633/4k/kyle-enochs-week-09-assignment-01-image-01.jpg?1662489961";
             }
             return imageUrl;
@@ -22,7 +24,7 @@ namespace WallpaperWithArtStation
 
         static async Task<string> DownloadImageAsync(string imageUrl)
         {
-            string tempFilePath = Path.GetTempFileName() + ".jpg";
+            string tempFilePath = Path.Combine(Path.GetTempPath(), "wallpaper.jpg");
 
             using HttpClient client = new HttpClient();
             using HttpResponseMessage response = await client.GetAsync(imageUrl);
@@ -45,12 +47,24 @@ namespace WallpaperWithArtStation
             SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, imagePath, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
         }
 
-        static async Task Main(string[] args)
+        static async Task RunMainLogic()
         {
             string imageUrl = await FetchRandomArtworkUrlAsync();
             string imagePath = await DownloadImageAsync(imageUrl);
             SetWallpaper(imagePath);
-            File.Delete(imagePath);
+        }
+
+        static async Task Main(string[] args)
+        {
+            var periodTimeSpan = TimeSpan.FromMinutes(1);
+
+            var timer = new System.Threading.Timer(async (e) =>
+            {
+                await RunMainLogic();
+                File.Delete(Path.Combine(Path.GetTempPath(), "wallpaper.jpg"));
+            }, null, TimeSpan.Zero, periodTimeSpan);
+
+            await Task.Delay(Timeout.Infinite);
         }
     }
 }
