@@ -52,6 +52,7 @@ namespace WallpaperWithArtStation
             string imageUrl = await FetchRandomArtworkUrlAsync();
             string imagePath = await DownloadImageAsync(imageUrl);
             SetWallpaper(imagePath);
+            File.Delete(imagePath);
         }
 
         static async Task Main(string[] args)
@@ -61,7 +62,6 @@ namespace WallpaperWithArtStation
             var timer = new System.Threading.Timer(async (e) =>
             {
                 await RunMainLogic();
-                File.Delete(Path.Combine(Path.GetTempPath(), "wallpaper.jpg"));
             }, null, TimeSpan.Zero, periodTimeSpan);
 
             await Task.Delay(Timeout.Infinite);
